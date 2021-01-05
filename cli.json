@@ -1,0 +1,13 @@
+{
+  "requirements": {
+    "python": "3.0.0"
+  },
+  "commands": [
+    {
+      "name": "mediaservices",
+      "aliases": ["ms"],
+      "version": "0.0.1",
+      "description": "An Akamai CLI package for Media Services "
+    }
+  ]
+}

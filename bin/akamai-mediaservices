@@ -1,0 +1,166 @@
+#! /usr/bin/env python
+
+""" Copyright 2017 Akamai Technologies, Inc. All Rights Reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+
+ You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ ************************************************************************
+ *  Media Services CLI module by Achuthananda M P (apadmana@akamai.com) & Suhas Bharadwaj (sbharadw@akamai.com)*
+ ************************************************************************
+
+"""
+# Libraries commmon to python 2 and 3
+from __future__ import print_function
+from outputformat import *
+from endpointdef import *
+import sys
+import os
+import logging
+import random
+import re
+import requests
+import json
+import urllib
+import texttable as tt
+from future import standard_library
+from future.builtins import next
+from future.builtins import object
+from http_calls import EdgeGridHttpCaller
+from akamai.edgegrid import EdgeGridAuth
+from config import EdgeGridConfig
+from subprocess import call
+standard_library.install_aliases()
+
+if sys.version_info[0] >= 3:
+     # python3
+    from urllib.parse import urljoin
+else:
+     # python2.7
+    from urlparse import urljoin
+
+
+def main():
+    """ Processes the right command (list-configs, get-configs, acknowledge-cidrs) """
+    if config.command == "list-domains":
+        if hasattr(config, 'accountSwitchKey'):
+            domainList = listDomains(config.accountSwitchKey)
+        else:
+            domainList = listDomains()
+        formatOutputDomainList(domainList, config.output_type)
+
+    elif config.command == "list-streams":
+        if hasattr(config, 'accountSwitchKey'):
+            streamList = listStreams(config.domainName, config.accountSwitchKey)
+        else:
+            streamList = listStreams(config.domainName)
+        formatOutputStreamList(streamList, config.output_type)
+
+    elif config.command == "list-events":
+        if hasattr(config, 'accountSwitchKey'):
+            eventsList = listEvents(config.domainName, config.streamId, config.accountSwitchKey)
+        else:
+            eventsList = listEvents(config.domainName, config.streamId)
+        formatOutputEventList(eventsList, config.output_type)
+
+    elif config.command == "list-rtmp-configs":
+        if hasattr(config, 'accountSwitchKey'):
+            rtmpConfigList = listRtmpConfigs(config.accountSwitchKey)
+        else:
+            rtmpConfigList = listRtmpConfigs()
+        formatOutputRTMPConfigList(rtmpConfigList, config.output_type)
+
+    elif config.command == "list-rtmp-streams":
+        if hasattr(config, 'accountSwitchKey'):
+            rtmpStreamList = listRtmpStreams(config.accountSwitchKey)
+        else:
+            rtmpStreamList = listRtmpStreams()
+        formatOutputRTMPStreamList(rtmpStreamList, config.output_type)
+
+    elif config.command == "list-storage-group":
+        if hasattr(config, 'accountSwitchKey'):
+            storageGroupList = listStorageGroup(config.accountSwitchKey)
+        else:
+            storageGroupList = listStorageGroup()
+        formatOutputStorageGroupList(storageGroupList, config.output_type)
+
+    elif config.command == "get-domain":
+        if hasattr(config, 'accountSwitchKey'):
+            domainInfo = GetDomain(config.domain, config.accountSwitchKey)
+        else:
+            domainInfo = GetDomain(config.domain)
+        formatOutputgetDomain(domainInfo, config.output_type)
+
+    elif config.command == "get-stream":
+        if hasattr(config, 'accountSwitchKey'):
+            streamInfo = GetStream(config.domain, config.streamid, config.accountSwitchKey)
+        else:
+            streamInfo = GetStream(config.domain, config.streamid)
+        formatOutputgetDomain(streamInfo, config.output_type)
+
+    elif config.command == "get-event":
+        if hasattr(config, 'accountSwitchKey'):
+            eventInfo = GetEvent(config.domain, config.streamid,
+                                 config.eventname, config.accountSwitchKey)
+        else:
+            eventInfo = GetEvent(config.domain, config.streamid, config.eventname)
+        formatOutputgetEvent(eventInfo, config.output_type)
+
+    elif config.command == "get-rtmp-config":
+        if hasattr(config, 'accountSwitchKey'):
+            rtmpConfigInfo = GetRTMPConfig(config.cpcode, config.accountSwitchKey)
+        else:
+            rtmpConfigInfo = GetRTMPConfig(config.cpcode)
+        formatOutputgetRTMPConfig(rtmpConfigInfo, config.output_type)
+
+    elif config.command == "get-rtmp-stream":
+        if hasattr(config, 'accountSwitchKey'):
+            rtmpStreamInfo = GetRTMPStream(config.streamId, config.accountSwitchKey)
+        else:
+            rtmpStreamInfo = GetRTMPStream(config.streamId)
+        formatOutputgetRTMPStream(rtmpStreamInfo, config.output_type)
+
+    # Starting MSL endpoints - all commands to have msl in invocation to clearly identify the MSL
+
+    elif config.command == "list-msl-streams":
+        if hasattr(config, 'accountSwitchKey'):
+            streamList = listmslStreams(config.accountSwitchKey)
+        else:
+            streamList = listmslStreams()
+        formatOutputMSLStreamList(streamList, config.output_type)
+
+    elif config.command == "get-msl-streams":
+        if hasattr(config, 'accountSwitchKey'):
+            streamInfo = getmslStreams(config.accountSwitchKey, config.streamid)
+        else:
+            streamInfo = getmslStreams(config.streamid)
+        formatOutputgetMSLStream(streamInfo, config.output_type)
+
+    elif config.command == "list-CDNs":
+        if hasattr(config, 'accountSwitchKey'):
+            cdnList = listcdns(config.accountSwitchKey)
+        else:
+            cdnList = listcdns()
+        formatOutputcdnlist(cdnList, config.output_type)
+
+    elif config.command == "list-cpcodes":
+        if hasattr(config, 'accountSwitchKey'):
+            cpcodes_list = listcpcodes(config.accountSwitchKey, config.type, config.unused)
+
+        else:
+            cpcodes_list = listcpcodes(config.type, config.unused)
+        formatOutputcpcodelist(cpcodes_list, config.output_type)
+
+
+if __name__ == "__main__":
+    main()
